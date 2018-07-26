@@ -67,6 +67,8 @@ def train(batch_size, context, sgd=False):
         validating_L = 0.0
         validating_batch = 0
         validating_set.reset()
+        cls_metric = mx.metric.Accuracy()
+        box_metric = mx.metric.MAE()
         for batch in validating_set:
             validating_batch += 1
             x = color_normalize(batch.data[0].as_in_context(context))
@@ -79,12 +81,21 @@ def train(batch_size, context, sgd=False):
             if batch_L != batch_L:
                 raise ValueError()
             validating_L += batch_L
+            cls_metric.update([cls_target], [cls_preds.transpose(axes=(0, 2, 1))])
+            box_metric.update([box_target], [box_preds * box_mask])
 
         epoch += 1
 
         avg_L = training_L / training_batch
-        print("[Epoch %d]  learning_rate %.10f  training_loss %.10f  validating_loss %.10f  epochs_no_progress %d  duration %.2fs" % (
-            epoch, learning_rate, training_L / training_batch, validating_L / validating_batch, epochs_no_progress, time.time() - ts
+        print("[Epoch %d]  learning_rate %.10f  training_loss %.10f  validating_loss %.10f  %s %f  %s %f epochs_no_progress %d  duration %.2fs" % (
+            epoch,
+            learning_rate,
+            training_L / training_batch,
+            validating_L / validating_batch,
+            *cls_metric.get(),
+            *box_metric.get(),
+            epochs_no_progress,
+            time.time() - ts
         ), flush=True)
 
         if avg_L < best_L:
