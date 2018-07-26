@@ -2,7 +2,7 @@ import os
 import time
 import argparse
 import mxnet as mx
-from dataset import load_dataset, color_normalize
+from dataset import load_dataset, color_normalize, cook_label
 from toy_ssd import FeatureExtractor, ToySSD, targets, FocalLoss, SmoothL1Loss
 
 def train(batch_size, context, sgd=False):
@@ -27,7 +27,7 @@ def train(batch_size, context, sgd=False):
         epoch = 0
         best_L = float("Inf")
         epochs_no_progress = 0
-        learning_rate = 0.001
+        learning_rate = 0.0005
         model.initialize(mx.init.Xavier(), ctx=context)
 
     print("Learning rate:", learning_rate)
@@ -49,7 +49,7 @@ def train(batch_size, context, sgd=False):
         for batch in training_set:
             training_batch += 1
             x = color_normalize(batch.data[0].as_in_context(context))
-            label = batch.label[0].as_in_context(context)
+            label = cook_label(batch.label[0].as_in_context(context))
             source = features(x)
             with mx.autograd.record():
                 anchors, cls_preds, box_preds = model(source)
@@ -70,7 +70,7 @@ def train(batch_size, context, sgd=False):
         for batch in validating_set:
             validating_batch += 1
             x = color_normalize(batch.data[0].as_in_context(context))
-            label = batch.label[0].as_in_context(context)
+            label = cook_label(batch.label[0].as_in_context(context))
             source = features(x)
             anchors, cls_preds, box_preds = model(source)
             cls_target, box_target, box_mask = targets(anchors, cls_preds, label)
@@ -90,7 +90,7 @@ def train(batch_size, context, sgd=False):
         if avg_L < best_L:
             best_L = avg_L
             epochs_no_progress = 0
-            model.save_params("model/toy_ssd.params")
+            model.save_parameters("model/toy_ssd.params")
             with open("model/toy_ssd.ckpt", "a") as f:
                 f.write("%d %.10f %.10f %d\n" % (epoch, best_L, learning_rate, epochs_no_progress))
         elif epochs_no_progress < 2:
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     while True:
         try:
             train(
-                batch_size = 32,
+                batch_size = 256,
                 context = context,
                 sgd = args.sgd
             )

@@ -24,11 +24,19 @@ def color_normalize(x):
     std = mx.nd.array([[[0.229]], [[0.224]], [[0.225]]], x.context)
     return ((x / 255) - mean) / std
 
+def cook_label(label):
+    num_labels = label.shape[1]
+    if num_labels < 3:
+        label = label.broadcast_axes(axis=1, size=3)
+        label[:,num_labels:,:] = -mx.nd.ones_like(label[:,num_labels:,:])
+    return label
+
 
 if __name__ == "__main__":
     training_set, _ = load_dataset(4)
     batch = training_set.next()
     print(color_normalize(batch.data[0]))
+    print(cook_label(batch.label[0]))
     img = batch.data[0][0].asnumpy()
     img = img.transpose((1, 2, 0)).astype(np.uint8)
     plt.imshow(img)
