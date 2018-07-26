@@ -3,7 +3,7 @@ import time
 import argparse
 import mxnet as mx
 from dataset import load_dataset, color_normalize
-from toy_ssd import FeatureExtractor, ToySSD, training_targets, FocalLoss, SmoothL1Loss
+from toy_ssd import FeatureExtractor, ToySSD, targets, FocalLoss, SmoothL1Loss
 
 def train(batch_size, context, sgd=False):
     print("Loading dataset...", flush=True)
@@ -53,7 +53,7 @@ def train(batch_size, context, sgd=False):
             source = features(x)
             with mx.autograd.record():
                 anchors, cls_preds, box_preds = model(source)
-                cls_target, box_target, box_mask = training_targets(anchors, cls_preds, label)
+                cls_target, box_target, box_mask = targets(anchors, cls_preds, label)
                 L = cls_loss(cls_preds, cls_target) + box_loss(box_preds, box_target, box_mask)
                 L.backward()
             trainer.step(batch_size)
@@ -73,7 +73,7 @@ def train(batch_size, context, sgd=False):
             label = batch.label[0].as_in_context(context)
             source = features(x)
             anchors, cls_preds, box_preds = model(source)
-            cls_target, box_target, box_mask = validating_targets(anchors, cls_preds, label)
+            cls_target, box_target, box_mask = targets(anchors, cls_preds, label)
             L = cls_loss(cls_preds, cls_target) + box_loss(box_preds, box_target, box_mask)
             batch_L = mx.nd.mean(L).asscalar()
             if batch_L != batch_L:

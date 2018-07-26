@@ -74,7 +74,7 @@ class ToySSD(mx.gluon.nn.Block):
         )
 
 
-def training_targets(anchors, cls_preds, labels):
+def targets(anchors, cls_preds, labels):
     res = mx.nd.contrib.MultiBoxTarget(anchors, labels, cls_preds.transpose(axes=(0, 2, 1)))
     box_target = res[0]
     box_mask = res[1]
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     model.initialize(mx.init.Xavier(), ctx=mx.cpu())
     anchors, cls_preds, box_preds = model(features(mx.nd.zeros((4, 3, 256, 256), ctx=mx.cpu())))
     print(anchors, cls_preds, box_preds)
-    cls_target, box_target, box_mask = training_targets(anchors, cls_preds, mx.nd.zeros((4, 1, 5), ctx=mx.cpu()))
+    cls_target, box_target, box_mask = targets(anchors, cls_preds, mx.nd.zeros((4, 1, 5), ctx=mx.cpu()))
     print(cls_target, box_target, box_mask)
     cls_loss = FocalLoss()
     print(cls_loss(cls_preds, cls_target))
