@@ -23,7 +23,7 @@ def cook_image(img, size, norm=True):
     else:
         return img
 
-parser = argparse.ArgumentParser(description="Start a ai_challenger_caption tester.")
+parser = argparse.ArgumentParser(description="Start a toy_ssd tester.")
 parser.add_argument("images", metavar="IMG", help="path of the image file[s]", type=str, nargs="+")
 parser.add_argument("--device_id", help="select device that the model using (default: 0)", type=int, default=0)
 parser.add_argument("--gpu", help="using gpu acceleration", action="store_true")
